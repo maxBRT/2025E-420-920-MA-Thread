@@ -6,7 +6,7 @@ import concurrent.futures
 
 
 class MyApp:
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root: tk.Tk, exec: concurrent.futures.ThreadPoolExecutor):
         self.root = root
         self.root.title("Pratique Threading")
         self.root.geometry("600x300")
@@ -21,7 +21,6 @@ class MyApp:
         self.setup_ui()
 
         self.executor = concurrent.futures.ThreadPoolExecutor(max_workers=2)
-        self.future = None
 
     def setup_ui(self):
         # Conteneur principal
@@ -78,23 +77,25 @@ class MyApp:
 
     def start_long_task(self):
         """Démarre une tâche longue qui bloque le GUI"""
-        # Désactiver le bouton immédiatement
-        self.start_button.config(state=tk.DISABLED)
+        try:
+            # Désactiver le bouton immédiatement
+            self.start_button.config(state=tk.DISABLED)
 
-        # Mettre à jour le compteur
-        self.task_counter += 1
-        task_id = self.task_counter
+            # Mettre à jour le compteur
+            self.task_counter += 1
+            task_id = self.task_counter
 
-        # Logger le début de la tâche
-        self.log_message(f"Début de la tâche #{task_id}")
+            # Logger le début de la tâche
+            self.log_message(f"Début de la tâche #{task_id}")
 
-        # Exécuter la tâche longue
+            # Exécuter la tâche longue
 
-        self.future = self.executor.submit(long_task, task_id)
-        self.future.add_done_callback(lambda f: self.log_message(f"Résultat : {f.result()}"))
-
-        # Réactiver le bouton
-        self.start_button.config(state=tk.NORMAL)
-
+            future = self.executor.submit(long_task, task_id)
+            future.add_done_callback(lambda f: self.log_message(f"Résultat : {f.result()}"))
+            # Réactiver le bouton
+        except Exception as e:
+            self.log_message(f"Une erreur est survenue: {str(e)}")
+        finally:
+            self.start_button.config(state=tk.NORMAL)
 
 
